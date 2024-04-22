@@ -1,0 +1,91 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HP_Driver_Tool"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        x:Class="HP_Driver_Tool.Views.MainWindow" mc:Ignorable="d"
+        Title="HP Driver Tool" Height="800" Width="1400">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="700*"/>
+            <ColumnDefinition Width="600*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="600*"/>
+        </Grid.RowDefinitions>
+        <StackPanel VerticalAlignment="Stretch" Grid.Row="0" Margin="0,15,0,15" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
+            <hc:SearchBar x:Name="sb_pnNumber" Width="380" hc:InfoElement.Necessary="True" hc:InfoElement.Placeholder="Please Enter Product Number" Style="{StaticResource SearchBarPlus}" SearchStarted="SearchBar_SearchStarted" />
+            <ComboBox ItemsSource="{Binding OsPlatforms}" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the windows" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged"/>
+            <ComboBox ItemsSource="{Binding OsVersions}" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the version" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged_1"/>
+            <StackPanel Orientation="Horizontal">
+                <Button Margin="6,0,0,0" hc:IconElement.Geometry="{StaticResource SaveGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=InstallAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+                <Button Margin="6,0,15,0" hc:IconElement.Geometry="{StaticResource DownloadGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=DownloadAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+            </StackPanel>
+        </StackPanel>
+        <hc:SimpleStackPanel x:Name="simpleStackPanel" Margin="15,0,0,15" Grid.Row="1" Grid.Column="0">
+            <hc:ScrollViewer Style="{StaticResource ScrollViewerUpDown}" Height="{Binding Height, ElementName=simpleStackPanel}">
+                <ItemsControl Height="{Binding ActualHeight, ElementName=simpleStackPanel, Mode=OneWay}" Margin="15,0,30,0" x:Name="softwearPanel" ItemsSource="{Binding Softwares}" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" >
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Expander Header="{Binding accordionName}" Style="{StaticResource customExpander}" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch">
+                                <ListView ItemsSource="{Binding softwareDriversList}" SelectionMode="Multiple" SelectionChanged="ListView_SelectionChanged" Cursor="Hand">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Width="500" DisplayMemberBinding="{Binding latestVersionDriver.title}"/>
+                                            <GridViewColumn Width="130" DisplayMemberBinding="{Binding latestVersionDriver.version}"/>
+                                        </GridView>
+                                    </ListView.View>
+                                    <ListView.Resources>
+                                        <Style TargetType="GridViewColumnHeader">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </Style>
+                                    </ListView.Resources>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource ListViewItemBaseStyle}">
+                                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                            <Style.Triggers>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected" Value="true"/>
+                                                        <Condition Property="Selector.IsSelectionActive" Value="false"/>
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextIconBrush}"/>
+                                                </MultiTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                            </Expander>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </hc:ScrollViewer>
+        </hc:SimpleStackPanel>
+        <hc:SimpleStackPanel x:Name="selectedSimpleStackPanel" Margin="0,0,0,15" Grid.Row="1" Grid.Column="1">
+            <hc:ScrollViewer Style="{StaticResource ScrollViewerUpDown}" Height="{Binding Height, ElementName=selectedSimpleStackPanel}">
+                <DataGrid Margin="0,0,30,0" HeadersVisibility="None" RowStyle="{StaticResource DataGridRowStyleProgress}" AutoGenerateColumns="False" ItemsSource="{Binding SelectedSoftwares}" Effect="{StaticResource EffectShadow2}" VerticalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" FontWeight="Bold">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Width="80*" Binding="{Binding title}" IsReadOnly="True"/>
+                        <DataGridTextColumn Width="30*" Binding="{Binding version}" IsReadOnly="True"/>
+                        <DataGridTemplateColumn Width="60" CanUserResize="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ToggleButton Margin="6,0,0,0" CommandParameter="{Binding}"
+                                                          hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Style="{StaticResource ToggleButtonIconDanger}" Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}},
+                                                  Path=DataContext.RemoveCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </hc:ScrollViewer>
+        </hc:SimpleStackPanel>
+    </Grid>
+
+</Window>
