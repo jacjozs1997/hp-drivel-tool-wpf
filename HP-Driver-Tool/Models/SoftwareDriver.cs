@@ -42,6 +42,7 @@ namespace HP_Driver_Tool.Models
         public string versionUpdatedDateString { get; set; }
         public string fileSize { get; set; }
         public string fileUrl { get; set; }
+        public string filePath { get; set; }
         public override bool Equals(object obj)
         {
             return obj is SoftwareDriver driver &&

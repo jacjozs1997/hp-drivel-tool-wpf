@@ -49,17 +49,17 @@ namespace HP_Driver_Tool.Views
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ComboBox comboBox = sender as ComboBox;
-            SoftwareManager.UpdateOsVersion(comboBox.SelectedValue as string);
+            Context.UpdateOsVersion(comboBox.SelectedValue as string);
         }
 
         private void SearchBar_SearchStarted(object sender, HandyControl.Data.FunctionEventArgs<string> e)
         {
-            SoftwareManager.GetOsInfos(e.Info);
+            Context.GetOsInfos(e.Info);
         }
         private void ComboBox_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
         {
             ComboBox comboBox = sender as ComboBox;
-            SoftwareManager.GetDrivers(comboBox.SelectedValue as string);
+            Context.GetDrivers(comboBox.SelectedValue as string);
         }
     }
 }
