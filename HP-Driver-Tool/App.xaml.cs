@@ -31,7 +31,7 @@ namespace HP_Driver_Tool
                 foreach (ManagementObject process in searcher.Get())
                 {
                     process.Get();
-                    //m_devicePn = process["Model"] as string;
+                    m_devicePn = process["Model"] as string;
                 }
             }
             SoftwareManager.GetOsInfos();
