@@ -96,11 +96,13 @@ namespace HP_Driver_Tool.ViewModels
             foreach (var drive in m_selected)
             {
                 drive.Percent = 0;
-                if (!Directory.Exists(Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}")))
+                var path = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}");
+                if (!Directory.Exists(path))
                 {
-                    Directory.CreateDirectory(Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}"));
+                    Directory.CreateDirectory(path);
                 }
-                ExtractFile(drive.filePath, Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}"));
+                ExtractFile(drive.filePath, path);
+                Process.Start(Path.Combine(path, "install.cmd")).WaitForExit();
             }
         }
         public void ExtractFile(string sourceArchive, string destination)
