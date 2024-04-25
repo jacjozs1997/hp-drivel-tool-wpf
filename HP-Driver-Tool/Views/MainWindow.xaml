@@ -21,9 +21,9 @@
         </Grid.RowDefinitions>
         <StackPanel VerticalAlignment="Stretch" Grid.Row="0" Margin="0,15,0,15" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
             <hc:CircleProgressBar x:Name="loadingSpin" Margin="0,0,15,0" Visibility="{Binding Path=Loading, Converter={StaticResource BoolToVis}}" ShowText="False" Width="20" Height="20" ArcThickness="2" IsIndeterminate="True"/>
-            <hc:SearchBar x:Name="sb_pnNumber" Width="380" hc:InfoElement.Necessary="True" hc:InfoElement.Placeholder="Please Enter Product Number" Style="{StaticResource SearchBarPlus}" SearchStarted="SearchBar_SearchStarted" />
-            <ComboBox ItemsSource="{Binding OsPlatforms}" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the windows" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged"/>
-            <ComboBox ItemsSource="{Binding OsVersions}" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the version" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged_1"/>
+            <hc:SearchBar x:Name="sb_pnNumber" Width="380" hc:InfoElement.Necessary="True" BorderBrush="{Binding Path=IsValid, RelativeSource={RelativeSource TemplatedParent}}" hc:InfoElement.Placeholder="Please Enter Product Number" Style="{StaticResource SearchBarPlus}" SearchStarted="SearchBar_SearchStarted" />
+            <ComboBox ItemsSource="{Binding OsPlatforms}" x:Name="cb_osPlatforms" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the windows" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged"/>
+            <ComboBox ItemsSource="{Binding OsVersions}" x:Name="cb_osVersions" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the version" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged_1"/>
             <StackPanel Orientation="Horizontal">
                 <Button Margin="6,0,0,0" hc:IconElement.Geometry="{StaticResource SaveGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=InstallAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
                 <Button Margin="6,0,15,0" hc:IconElement.Geometry="{StaticResource DownloadGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=DownloadAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>

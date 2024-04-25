@@ -3,6 +3,7 @@ using HP_Driver_Tool.ViewModels;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace HP_Driver_Tool.Models
 {
@@ -36,6 +37,7 @@ namespace HP_Driver_Tool.Models
     {
         private int percent;
         public SoftwareDrivers Parent { get; set; }
+        public Task DownloadTask { get; set; }
         public string SoftwareId { get; set; }
         public string title { get; set; }
         public string version { get; set; }

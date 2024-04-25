@@ -29,6 +29,36 @@ namespace HP_Driver_Tool.Views
             InitializeComponent();
             DataContext = new MainWindowViewModel();
             sb_pnNumber.Text = App.DeviceProductNumber;
+
+            Context.InvalidSearchHandler += InvalidSearch;
+            Context.ValidSearchHandler += ValidSearch;
+            Context.SelectPlatformHandler += SelectPlatform;
+
+            Context.GetOsInfos();
+        }
+        public void InvalidSearch(string message)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var danger = FindResource("DangerBrush") as LinearGradientBrush;
+                sb_pnNumber.BorderBrush = danger;
+            }));
+        }
+        public void ValidSearch()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var primary = FindResource("PrimaryBrush") as LinearGradientBrush;
+                sb_pnNumber.BorderBrush = primary;
+                cb_osPlatforms.Focus();
+            }));
+        }        
+        public void SelectPlatform()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                cb_osVersions.Focus();
+            }));
         }
         private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

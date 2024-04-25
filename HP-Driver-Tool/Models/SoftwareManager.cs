@@ -33,7 +33,7 @@ namespace HP_Driver_Tool.Models
         public static SoftwareOsVersions SoftwareOsVersions => m_softwareOsVersions;
         #endregion
 
-        public static void GetOsInfos(string productNumber = null, Action afterAction = null)
+        public static void GetOsInfos(string productNumber = null, Action afterAction = null, Action afterFailAction = null)
         {
             if (productNumber == null && App.DeviceProductNumber != null)
             {
@@ -49,18 +49,30 @@ namespace HP_Driver_Tool.Models
                     var response = client.DownloadData($"https://support.hp.com/typeahead?q={productNumber}&resultLimit=1&store=tmsstore&languageCode=hu,en&printFields=tmspmseriesvalue,tmspmnamevalue,tmspmnumbervalue,activewebsupportflag,description");
                     m_productNumberInfos = JsonConvert.DeserializeObject<ProductNumberInfos>(Encoding.UTF8.GetString(response));
 
-                    response = client.DownloadData($"https://support.hp.com/wcc-services/swd-v2/osVersionData?cc=hu&lc=hu&productOid={m_productNumberInfos.matches[0].pmNameOid}");
-                    Console.WriteLine(Encoding.UTF8.GetString(response));
-                    m_softwareOsVersions = JsonConvert.DeserializeObject<SoftwareOsVersions>(Encoding.UTF8.GetString(response));
+                    if (m_productNumberInfos.totalCount > 0)
+                    {
+                        response = client.DownloadData($"https://support.hp.com/wcc-services/swd-v2/osVersionData?cc=hu&lc=hu&productOid={m_productNumberInfos.matches[0].pmNameOid}");
+                        Console.WriteLine(Encoding.UTF8.GetString(response));
+                        m_softwareOsVersions = JsonConvert.DeserializeObject<SoftwareOsVersions>(Encoding.UTF8.GetString(response));
+                        return true;
+                    }
+                    return false;
                 }
             }).ContinueWith(t =>
             {
-                m_osPlatforms.Clear();
+                if (t.Result)
+                {
+                    m_osPlatforms.Clear();
 
-                m_osVersions.Clear();
+                    m_osVersions.Clear();
 
-                m_osPlatforms.AddFromEnumerable(m_softwareOsVersions.data.osversions.Select(os => os.name));
-                afterAction?.Invoke();
+                    m_osPlatforms.AddFromEnumerable(m_softwareOsVersions.data.osversions.Select(os => os.name));
+                    afterAction?.Invoke();
+                }
+                else
+                {
+                    afterFailAction?.Invoke();
+                }
             });
         }
         public static void UpdateOsVersion(string platform)

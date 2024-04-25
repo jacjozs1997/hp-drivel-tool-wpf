@@ -30,8 +30,17 @@ namespace HP_Driver_Tool.ViewModels
         public RelayCommand<string> InstallAllCmd => m_installAllCmd;
 
         private bool m_loading = false;
+        private bool m_isValid = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public delegate void InvalidSearch(string message);
+        public delegate void ValidSearch();
+        public delegate void SelectPlatform();
+
+        public InvalidSearch InvalidSearchHandler;
+        public ValidSearch ValidSearchHandler;
+        public SelectPlatform SelectPlatformHandler;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
@@ -45,6 +54,15 @@ namespace HP_Driver_Tool.ViewModels
                 m_loading = value;
                 OnPropertyChanged();//For .Net<4.5, use OnPropertyChanged("IsSelected")
             }
+        }        
+        public bool IsValid
+        {
+            get { return m_isValid; }
+            set
+            {
+                m_isValid = value;
+                OnPropertyChanged();//For .Net<4.5, use OnPropertyChanged("IsSelected")
+            }
         }
 
         public MainWindowViewModel()
@@ -56,6 +74,11 @@ namespace HP_Driver_Tool.ViewModels
         private void Remove(SoftwareDriver drive)
         {
             drive.Parent.IsSelected = false;
+            if (drive.DownloadTask.Status == System.Threading.Tasks.TaskStatus.Running)
+            {
+                //drive.DownloadTask?.Dispose(); TODO Cancelling CancellationToken
+                //TODO Delete downloaded part file
+            }
         }
         private void Download(string args)
         {
@@ -102,7 +125,16 @@ namespace HP_Driver_Tool.ViewModels
                     Directory.CreateDirectory(path);
                 }
                 ExtractFile(drive.filePath, path);
-                Process.Start(Path.Combine(path, "install.cmd")).WaitForExit();
+
+                path = Path.Combine(path, "install.cmd");
+                if (File.Exists(path))
+                {
+                    Process.Start(path);
+                } 
+                else
+                {
+                    //TODO
+                }
             }
         }
         public void ExtractFile(string sourceArchive, string destination)
@@ -125,13 +157,24 @@ namespace HP_Driver_Tool.ViewModels
         public void GetOsInfos(string productNumber = null)
         {
             Loading = true;
-            SoftwareManager.GetOsInfos(productNumber, () => Loading = false);
+            SoftwareManager.GetOsInfos(productNumber, () =>
+            {
+                Loading = false;
+                IsValid = true;
+                ValidSearchHandler?.Invoke();
+            }, () =>
+            {
+                Loading = false;
+                IsValid = false;
+                InvalidSearchHandler?.Invoke(null);
+            });
         }
         public void UpdateOsVersion(string platform)
         {
             Loading = true;
             SoftwareManager.UpdateOsVersion(platform);
             Loading = false;
+            SelectPlatformHandler?.Invoke();
         }
         public void GetDrivers(string version)
         {

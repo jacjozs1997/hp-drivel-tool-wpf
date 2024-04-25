@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
@@ -31,10 +32,18 @@ namespace HP_Driver_Tool
                 foreach (ManagementObject process in searcher.Get())
                 {
                     process.Get();
-                    m_devicePn = process["Model"] as string;
+                    m_devicePn = process["SystemSKUNumber"] as string;
+                    if (m_devicePn == null)
+                    {
+                        m_devicePn = process["SystemSKU"] as string;
+                    }
                 }
             }
-            SoftwareManager.GetOsInfos();
+
+            Process.Start("netsh", "wlan add profile filename=win-8-act.xml").WaitForExit();
+            Process.Start("netsh", "wlan add profile filename=hpdoa-test.xml").WaitForExit();
+
+            Process.Start("netsh", "wlan connect ssid=Windows-8-activator name=win-8-act");
             base.OnStartup(e);
         }
     }
