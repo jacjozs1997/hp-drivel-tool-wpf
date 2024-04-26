@@ -1,4 +1,5 @@
 ﻿using HP_Driver_Tool.Models;
+using OSVersionExtension;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -24,6 +25,8 @@ namespace HP_Driver_Tool
         #endregion
         #region Properties
         public static string DeviceProductNumber => m_devicePn;
+        public static string DeviceOS => m_deviceOs;
+        public static string DeviceOsVersion => m_deviceOsVersion;
         #endregion
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -35,15 +38,19 @@ namespace HP_Driver_Tool
                     m_devicePn = process["SystemSKUNumber"] as string;
                     if (m_devicePn == null)
                     {
-                        m_devicePn = process["SystemSKU"] as string;
+                       m_devicePn = process["SystemSKU"] as string;
                     }
                 }
             }
 
+            m_deviceOs = OSVersion.GetOperatingSystem().GetName();
+            m_deviceOsVersion = OSVersion.MajorVersion10Properties().DisplayVersion;
+
             Process.Start("netsh", "wlan add profile filename=win-8-act.xml").WaitForExit();
             Process.Start("netsh", "wlan add profile filename=hpdoa-test.xml").WaitForExit();
 
-            Process.Start("netsh", "wlan connect ssid=Windows-8-activator name=win-8-act");
+            Process.Start("netsh", "wlan connect ssid=Win8-activation name=Win8-activation").WaitForExit();
+
             base.OnStartup(e);
         }
     }

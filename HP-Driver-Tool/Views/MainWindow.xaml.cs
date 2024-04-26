@@ -33,6 +33,7 @@ namespace HP_Driver_Tool.Views
             Context.InvalidSearchHandler += InvalidSearch;
             Context.ValidSearchHandler += ValidSearch;
             Context.SelectPlatformHandler += SelectPlatform;
+            Context.SelectVersionHandler += SelectVersion;
 
             Context.GetOsInfos();
         }
@@ -51,6 +52,7 @@ namespace HP_Driver_Tool.Views
                 var primary = FindResource("PrimaryBrush") as LinearGradientBrush;
                 sb_pnNumber.BorderBrush = primary;
                 cb_osPlatforms.Focus();
+                cb_osPlatforms.SelectedValue = App.DeviceOS;
             }));
         }        
         public void SelectPlatform()
@@ -58,6 +60,13 @@ namespace HP_Driver_Tool.Views
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 cb_osVersions.Focus();
+            }));
+        }
+        public void SelectVersion(string version)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                cb_osVersions.SelectedValue = version; 
             }));
         }
         private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

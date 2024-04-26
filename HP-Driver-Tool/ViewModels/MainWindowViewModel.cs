@@ -11,6 +11,10 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace HP_Driver_Tool.ViewModels
 {
@@ -22,10 +26,8 @@ namespace HP_Driver_Tool.ViewModels
         public static ObservableConcurrentCollection<string> OsPlatforms => SoftwareManager.OsPlatforms;
         public static ObservableConcurrentCollection<string> OsVersions => SoftwareManager.OsVersions;
 
-        private RelayCommand<SoftwareDriver> m_removeCmd;
         private RelayCommand<string> m_downloadAllCmd;
         private RelayCommand<string> m_installAllCmd;
-        public RelayCommand<SoftwareDriver> RemoveCmd => m_removeCmd;
         public RelayCommand<string> DownloadAllCmd => m_downloadAllCmd;
         public RelayCommand<string> InstallAllCmd => m_installAllCmd;
 
@@ -37,10 +39,12 @@ namespace HP_Driver_Tool.ViewModels
         public delegate void InvalidSearch(string message);
         public delegate void ValidSearch();
         public delegate void SelectPlatform();
+        public delegate void SelectVersion(string version);
 
         public InvalidSearch InvalidSearchHandler;
         public ValidSearch ValidSearchHandler;
         public SelectPlatform SelectPlatformHandler;
+        public SelectVersion SelectVersionHandler;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
@@ -65,20 +69,18 @@ namespace HP_Driver_Tool.ViewModels
             }
         }
 
+        public string Title 
+        { 
+            get
+            {
+                return $"HP Driver Tool | PN: {App.DeviceProductNumber} | OS: {App.DeviceOS} | Version: {App.DeviceOsVersion}";
+            } 
+        }
+
         public MainWindowViewModel()
         {
-            m_removeCmd = new RelayCommand<SoftwareDriver>(Remove, x => true);
             m_downloadAllCmd = new RelayCommand<string>(Download, x => true);
             m_installAllCmd = new RelayCommand<string>(Install, x => true);
-        }
-        private void Remove(SoftwareDriver drive)
-        {
-            drive.Parent.IsSelected = false;
-            if (drive.DownloadTask.Status == System.Threading.Tasks.TaskStatus.Running)
-            {
-                //drive.DownloadTask?.Dispose(); TODO Cancelling CancellationToken
-                //TODO Delete downloaded part file
-            }
         }
         private void Download(string args)
         {
@@ -94,15 +96,32 @@ namespace HP_Driver_Tool.ViewModels
             foreach (var drive in m_selected)
             {
                 drive.Percent = 0;
-                using (var client = new WebClient())
+                drive.ProgressBarStyle = Application.Current.TryFindResource(typeof(ProgressBar)) as Style;
+                drive.ProgressBarShow = true;
+                drive.filePath = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}.exe");
+
+                var client = new WebClient();
+                client.DownloadProgressChanged += (s, e) =>
                 {
-                    client.DownloadProgressChanged += (s, e) =>
+                    drive.Percent = e.ProgressPercentage;
+                };
+                client.DownloadFileCompleted += (s, e) =>
+                {
+                    if (e.Cancelled)
                     {
-                        drive.Percent = e.ProgressPercentage;
-                    };
-                    drive.filePath = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}.exe");
-                    client.DownloadFileAsync(new Uri(drive.fileUrl), drive.filePath);
-                }
+                        client.Dispose();
+                        drive.DownloadClient = null;
+                        File.Delete(drive.filePath);
+                        drive.ProgressBarStyle = Application.Current.Resources["ProgressBarDanger"] as Style;
+                        return;
+                    }
+                    else
+                    {
+                        drive.ProgressBarStyle = Application.Current.Resources["ProgressBarSuccess"] as Style;
+                    }
+                };
+                drive.DownloadClient = client;
+                drive.DownloadClient.DownloadFileAsync(new Uri(drive.fileUrl), drive.filePath);
             }
         }
         private void Install(string args)
@@ -118,7 +137,6 @@ namespace HP_Driver_Tool.ViewModels
             }
             foreach (var drive in m_selected)
             {
-                drive.Percent = 0;
                 var path = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}");
                 if (!Directory.Exists(path))
                 {
@@ -146,8 +164,7 @@ namespace HP_Driver_Tool.ViewModels
                 //pro.WindowStyle = ProcessWindowStyle.Hidden;
                 pro.FileName = zPath;
                 pro.Arguments = string.Format("x \"{0}\" -y -o\"{1}\"", sourceArchive, destination);
-                Process x = Process.Start(pro);
-                x.WaitForExit();
+                Process.Start(pro).WaitForExit();
             }
             catch (System.Exception Ex)
             {
@@ -169,17 +186,26 @@ namespace HP_Driver_Tool.ViewModels
                 InvalidSearchHandler?.Invoke(null);
             });
         }
-        public void UpdateOsVersion(string platform)
+        public void UpdateOsVersion(string platform = null)
         {
             Loading = true;
             SoftwareManager.UpdateOsVersion(platform);
             Loading = false;
             SelectPlatformHandler?.Invoke();
+            if (platform == null)
+            {
+                GetDrivers();
+            }
         }
-        public void GetDrivers(string version)
+        public void GetDrivers(string version = null)
         {
             Loading = true;
-            SoftwareManager.GetDrivers(version, () => Loading = false);
+            string finalVersion;
+            SoftwareManager.GetDrivers(version, out finalVersion, () => Loading = false);
+            if (finalVersion != version && finalVersion != null)
+            {
+                SelectVersionHandler?.Invoke(finalVersion);
+            }
         }
         string GetDownloadFolderPath()
         {

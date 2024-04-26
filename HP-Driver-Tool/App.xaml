@@ -11,6 +11,7 @@
                 <hc:Theme/>
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis" />
             <Style x:Key="DataGridRowStyleProgress" TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -25,10 +26,21 @@
                                     <RowDefinition Height="Auto"/>
                                 </SelectiveScrollingGrid.RowDefinitions>
                                 <Border CornerRadius="4" Grid.ColumnSpan="2" x:Name="DGR_Border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True"/>
-                                <ProgressBar HorizontalAlignment="Stretch" hc:VisualElement.Text="" MinHeight="{TemplateBinding MinHeight}" Grid.ColumnSpan="2" Value="{Binding Percent, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Minimum="0" Maximum="100" Margin="10,3,60,3"/>
-                                <DataGridCellsPresenter MinHeight="{TemplateBinding MinHeight}" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1" ItemsPanel="{TemplateBinding ItemsPanel}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                                <DataGridDetailsPresenter Grid.Column="1" Grid.Row="1" SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen, ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}, Converter={x:Static DataGrid.RowDetailsScrollingConverter}, RelativeSource={RelativeSource AncestorType=DataGrid}}" Visibility="{TemplateBinding DetailsVisibility}"/>
-                                <DataGridRowHeader Grid.Row="0" Grid.Column="0" SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical" Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                <StackPanel>
+                                    <DataGridCellsPresenter MinHeight="{TemplateBinding MinHeight}" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1" ItemsPanel="{TemplateBinding ItemsPanel}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    <DataGridDetailsPresenter Grid.Column="1" Grid.Row="1" SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen, ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}, Converter={x:Static DataGrid.RowDetailsScrollingConverter}, RelativeSource={RelativeSource AncestorType=DataGrid}}" Visibility="{TemplateBinding DetailsVisibility}"/>
+                                    <DataGridRowHeader Grid.Row="0" Grid.Column="0" SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical" Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                    <StackPanel Visibility="{Binding Path=ProgressBarShow, Converter={StaticResource BoolToVis}}">
+                                        <hc:Row Margin="0,13">
+                                            <hc:Col Span="21">
+                                                <ProgressBar Style="{Binding ProgressBarStyle}" HorizontalAlignment="Stretch" MinHeight="{TemplateBinding MinHeight}" Grid.ColumnSpan="2" Value="{Binding Percent, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Minimum="0" Maximum="100" Margin="10,0,0,0"/>
+                                            </hc:Col>
+                                            <hc:Col Span="3">
+                                                <Button hc:IconElement.Geometry="{StaticResource WindowsGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=OpenFolderCmd}" CommandParameter="{Binding}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+                                            </hc:Col>
+                                        </hc:Row>
+                                    </StackPanel>
+                                </StackPanel>
                             </SelectiveScrollingGrid>
                         </ControlTemplate>
                     </Setter.Value>

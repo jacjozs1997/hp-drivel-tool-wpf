@@ -6,10 +6,7 @@
         xmlns:local="clr-namespace:HP_Driver_Tool"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         x:Class="HP_Driver_Tool.Views.MainWindow" mc:Ignorable="d"
-        Title="HP Driver Tool" Height="800" Width="1400">
-    <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis" />
-    </Window.Resources>
+        Title="{Binding Title}" Height="800" Width="1400">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="700*"/>
@@ -29,16 +26,17 @@
                 <Button Margin="6,0,15,0" hc:IconElement.Geometry="{StaticResource DownloadGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=DownloadAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
             </StackPanel>
         </StackPanel>
-        <hc:SimpleStackPanel x:Name="simpleStackPanel" Margin="15,0,0,15" Grid.Row="1" Grid.Column="0">
-            <hc:ScrollViewer Style="{StaticResource ScrollViewerUpDown}" Height="{Binding Height, ElementName=simpleStackPanel}">
-                <ItemsControl Height="{Binding ActualHeight, ElementName=simpleStackPanel, Mode=OneWay}" Margin="15,0,30,0" x:Name="softwearPanel" ItemsSource="{Binding Softwares}" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" >
+        <hc:SimpleStackPanel Margin="15,0,0,15" Grid.Row="1" Grid.Column="0">
+            <hc:ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UIElement}}" IsInertiaEnabled="True">
+                <ItemsControl Margin="15,0,30,0" x:Name="softwearPanel" ItemsSource="{Binding Softwares}" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Expander Header="{Binding accordionName}" Style="{StaticResource customExpander}" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch">
                                 <ListView ItemsSource="{Binding softwareDriversList}" SelectionMode="Multiple" SelectionChanged="ListView_SelectionChanged" Cursor="Hand">
                                     <ListView.View>
                                         <GridView>
-                                            <GridViewColumn Width="500" DisplayMemberBinding="{Binding latestVersionDriver.title}"/>
+                                            <GridViewColumn Width="420" DisplayMemberBinding="{Binding latestVersionDriver.title}"/>
+                                            <GridViewColumn Width="80" DisplayMemberBinding="{Binding Path=latestVersionDriver.VersionUpdatedDate, StringFormat=yyyy-MM-dd}"/>
                                             <GridViewColumn Width="130" DisplayMemberBinding="{Binding latestVersionDriver.version}"/>
                                         </GridView>
                                     </ListView.View>
@@ -69,19 +67,19 @@
                 </ItemsControl>
             </hc:ScrollViewer>
         </hc:SimpleStackPanel>
-        <hc:SimpleStackPanel x:Name="selectedSimpleStackPanel" Margin="0,0,0,15" Grid.Row="1" Grid.Column="1">
-            <hc:ScrollViewer Style="{StaticResource ScrollViewerUpDown}" Height="{Binding Height, ElementName=selectedSimpleStackPanel}">
-                <DataGrid Margin="0,0,30,0" HeadersVisibility="None" RowStyle="{StaticResource DataGridRowStyleProgress}" AutoGenerateColumns="False" ItemsSource="{Binding SelectedSoftwares}" Effect="{StaticResource EffectShadow2}" VerticalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" FontWeight="Bold">
+        <hc:SimpleStackPanel Margin="0,0,0,15" Grid.Row="1" Grid.Column="1">
+            <hc:ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UIElement}}" IsInertiaEnabled="True">
+                <DataGrid Margin="0,0,30,0" HeadersVisibility="None" RowStyle="{StaticResource DataGridRowStyleProgress}" AutoGenerateColumns="False" ItemsSource="{Binding SelectedSoftwares}" Effect="{StaticResource EffectShadow2}" VerticalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" FontWeight="Bold">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="80*" Binding="{Binding title}" IsReadOnly="True"/>
-                        <DataGridTextColumn Width="30*" Binding="{Binding version}" IsReadOnly="True"/>
-                        <DataGridTemplateColumn Width="60" CanUserResize="False">
+                        <DataGridTextColumn Width="15*" Binding="{Binding title}" IsReadOnly="True"/>
+                        <DataGridTextColumn Width="3*" Binding="{Binding fileSize}" IsReadOnly="True"/>
+                        <DataGridTextColumn Width="5*" Binding="{Binding version}" IsReadOnly="True"/>
+                        <DataGridTemplateColumn Width="3*" CanUserResize="False">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
                                         <ToggleButton Margin="6,0,0,0" CommandParameter="{Binding}"
-                                                          hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Style="{StaticResource ToggleButtonIconDanger}" Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}},
-                                                  Path=DataContext.RemoveCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+                                                          hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Style="{StaticResource ToggleButtonIconDanger}" Command="{Binding RemoveCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
