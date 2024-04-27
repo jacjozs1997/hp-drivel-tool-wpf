@@ -32,10 +32,10 @@
                                     <DataGridRowHeader Grid.Row="0" Grid.Column="0" SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical" Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                                     <StackPanel Visibility="{Binding Path=ProgressBarShow, Converter={StaticResource BoolToVis}}">
                                         <hc:Row Margin="0,13">
-                                            <hc:Col Span="21">
+                                            <hc:Col Span="22">
                                                 <ProgressBar Style="{Binding ProgressBarStyle}" HorizontalAlignment="Stretch" MinHeight="{TemplateBinding MinHeight}" Grid.ColumnSpan="2" Value="{Binding Percent, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Minimum="0" Maximum="100" Margin="10,0,0,0"/>
                                             </hc:Col>
-                                            <hc:Col Span="3">
+                                            <hc:Col Span="2">
                                                 <Button hc:IconElement.Geometry="{StaticResource WindowsGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=OpenFolderCmd}" CommandParameter="{Binding}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
                                             </hc:Col>
                                         </hc:Row>

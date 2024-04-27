@@ -119,7 +119,10 @@ namespace HP_Driver_Tool.Models
             drive.ProgressBarShow = false;
             drive.Percent = 0;
             if (drive.filePath != null)
+            {
                 File.Delete(drive.filePath);
+                Directory.Delete(Path.GetDirectoryName(drive.filePath));
+            }
         }
         private void OpenFolder(SoftwareDriver drive)
         {

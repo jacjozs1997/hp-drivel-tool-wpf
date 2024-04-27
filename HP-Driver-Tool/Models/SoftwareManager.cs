@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
@@ -23,6 +23,7 @@ namespace HP_Driver_Tool.Models
         private static ObservableConcurrentCollection<SoftwareType> m_softwares = new ObservableConcurrentCollection<SoftwareType>();
         private static ObservableConcurrentCollection<string> m_osPlatforms = new ObservableConcurrentCollection<string>();
         private static ObservableConcurrentCollection<string> m_osVersions = new ObservableConcurrentCollection<string>();
+        private static string m_productNumber;
         private static string m_platform;
         #endregion
         #region Properties
@@ -31,10 +32,15 @@ namespace HP_Driver_Tool.Models
         public static ObservableConcurrentCollection<string> OsPlatforms => m_osPlatforms;
         public static ProductNumberInfos ProductNumberInfos => m_productNumberInfos;
         public static SoftwareOsVersions SoftwareOsVersions => m_softwareOsVersions;
+        public static string ProductNumber => m_productNumber;
         #endregion
 
-        public static void GetOsInfos(string productNumber = null, Action afterAction = null, Action afterFailAction = null)
+        public static void GetOsInfos(string productNumber = null, Action afterAction = null, Action<string> afterFailAction = null)
         {
+            OsPlatforms.Clear();
+            OsVersions.Clear();
+            Softwares.Clear();
+            m_platform = null;
             if (productNumber == null && App.DeviceProductNumber != null)
             {
                 productNumber = App.DeviceProductNumber;
@@ -46,13 +52,19 @@ namespace HP_Driver_Tool.Models
                 productNumber = productNumber.Substring(0, productNumber.IndexOf('#'));
             }
 
-            m_softwares.Clear();
+            if (!Regex.IsMatch(productNumber, @"^\w{7}$"))
+            {
+                afterFailAction?.Invoke("Invalid product number");
+                return;
+            }
+
+            m_productNumber = productNumber;
 
             Task.Run(() =>
             {
                 using (var client = new WebClient())
                 {
-                    var response = client.DownloadData($"https://support.hp.com/typeahead?q={productNumber}&resultLimit=1&store=tmsstore&languageCode=hu,en&printFields=tmspmseriesvalue,tmspmnamevalue,tmspmnumbervalue,activewebsupportflag,description");
+                    var response = client.DownloadData($"https://support.hp.com/typeahead?q={m_productNumber}&resultLimit=1&store=tmsstore&languageCode=hu,en&printFields=tmspmseriesvalue,tmspmnamevalue,tmspmnumbervalue,activewebsupportflag,description");
                     m_productNumberInfos = JsonConvert.DeserializeObject<ProductNumberInfos>(Encoding.UTF8.GetString(response));
 
                     if (m_productNumberInfos.totalCount > 0)
@@ -68,20 +80,20 @@ namespace HP_Driver_Tool.Models
             {
                 if (t.Result)
                 {
-                    m_osPlatforms.Clear();
+                    OsPlatforms.Clear();
 
-                    m_osVersions.Clear();
+                    OsVersions.Clear();
 
-                    m_osPlatforms.AddFromEnumerable(m_softwareOsVersions.data.osversions.Select(os => os.name));
+                    OsPlatforms.AddFromEnumerable(m_softwareOsVersions.data.osversions.Select(os => os.name));
                     afterAction?.Invoke();
                 }
                 else
                 {
-                    m_osPlatforms.Clear();
+                    OsPlatforms.Clear();
 
-                    m_osVersions.Clear();
+                    OsVersions.Clear();
 
-                    afterFailAction?.Invoke();
+                    afterFailAction?.Invoke("Not found product number");
                 }
             });
         }
@@ -97,13 +109,13 @@ namespace HP_Driver_Tool.Models
 
             m_platform = platform;
 
-            m_osVersions.Clear();
+            OsVersions.Clear();
             MainWindowViewModel.SelectedSoftwares.Clear();
-            m_softwares.Clear();
+            Softwares.Clear();
 
             var osPlatformVersions = m_softwareOsVersions.data.osversions.First(pl => pl.name.Equals(m_platform, StringComparison.OrdinalIgnoreCase)).osVersionList;
 
-            m_osVersions.AddFromEnumerable(osPlatformVersions.Select(os => os.name));
+            OsVersions.AddFromEnumerable(osPlatformVersions.Select(os => os.name));
         }
         private static int HammingDistance(string firstStrand, string secondStrand)
         {
@@ -129,11 +141,26 @@ namespace HP_Driver_Tool.Models
         public static void GetDrivers(string version, out string finalVersion, Action afterAction = null)
         {
             finalVersion = null;
+
+            if (m_platform == null) {
+                afterAction?.Invoke();
+                return; 
+            }
             if (version == null && App.DeviceOsVersion != null)
             {
                 version = App.DeviceOsVersion;
             }
-            else if (version == null) return;
+            else if (version == null)
+            {
+                afterAction?.Invoke();
+                return;
+            }
+
+            if (m_productNumberInfos.matches == null)
+            {
+                afterAction?.Invoke();
+                return;
+            }
 
             var osPlatformVersions = m_softwareOsVersions.data.osversions.First(pl => pl.name.Equals(m_platform, StringComparison.OrdinalIgnoreCase)).osVersionList;
 
@@ -188,7 +215,7 @@ namespace HP_Driver_Tool.Models
                 }
             }).ContinueWith(t =>
             {
-                m_softwares.Clear();
+                Softwares.Clear();
                 var swResponse = t.Result;
                 foreach (var sw in swResponse.data.softwareTypes)
                 {
@@ -200,7 +227,7 @@ namespace HP_Driver_Tool.Models
                     }
                     sw.softwareDriversList.Sort((a, b) => b.latestVersionDriver.VersionUpdatedDate.CompareTo(a.latestVersionDriver.VersionUpdatedDate));
                 }
-                m_softwares.AddFromEnumerable(swResponse.data.softwareTypes);
+                Softwares.AddFromEnumerable(swResponse.data.softwareTypes);
                 afterAction?.Invoke();
             });
         }

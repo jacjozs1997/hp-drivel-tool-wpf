@@ -1,28 +1,17 @@
 ﻿using HandyControl.Controls;
 using HandyControl.Data;
-using HandyControl.Tools.Command;
 using HP_Driver_Tool.Models;
 using HP_Driver_Tool.ViewModels;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace HP_Driver_Tool.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : System.Windows.Window
+    public partial class MainWindow : Window
     {
         protected MainWindowViewModel Context => (MainWindowViewModel)DataContext;
         public MainWindow()
@@ -47,7 +36,7 @@ namespace HP_Driver_Tool.Views
 
                 Growl.Error(new GrowlInfo
                 {
-                    Message = "Invalid product number",
+                    Message = message,
                     ShowDateTime = false,
                     Token = Context.Token
                 });

@@ -87,11 +87,11 @@ namespace HP_Driver_Tool.ViewModels
         private void Download(string args)
         {
             string directory = GetDownloadFolderPath();
-            if (App.DeviceProductNumber != null)
+            if (SoftwareManager.ProductNumber != null)
             {
-                directory = Path.Combine(directory, App.DeviceProductNumber);
+                directory = Path.Combine(directory, SoftwareManager.ProductNumber);
             }
-            if (App.DeviceProductNumber != null && !Directory.Exists(Path.Combine(directory, App.DeviceProductNumber)))
+            if (SoftwareManager.ProductNumber != null && !Directory.Exists(Path.Combine(directory, SoftwareManager.ProductNumber)))
             {
                 Directory.CreateDirectory(directory);
             }
@@ -129,11 +129,11 @@ namespace HP_Driver_Tool.ViewModels
         private void Install(string args)
         {
             string directory = GetDownloadFolderPath();
-            if (App.DeviceProductNumber != null)
+            if (SoftwareManager.ProductNumber != null)
             {
-                directory = Path.Combine(directory, App.DeviceProductNumber);
+                directory = Path.Combine(directory, SoftwareManager.ProductNumber);
             }
-            if (App.DeviceProductNumber != null && !Directory.Exists(Path.Combine(directory, App.DeviceProductNumber)))
+            if (SoftwareManager.ProductNumber != null && !Directory.Exists(Path.Combine(directory, SoftwareManager.ProductNumber)))
             {
                 Directory.CreateDirectory(directory);
             }
@@ -181,11 +181,11 @@ namespace HP_Driver_Tool.ViewModels
                 Loading = false;
                 IsValid = true;
                 ValidSearchHandler?.Invoke();
-            }, () =>
+            }, (msg) =>
             {
                 Loading = false;
                 IsValid = false;
-                InvalidSearchHandler?.Invoke(null);
+                InvalidSearchHandler?.Invoke(msg);
             });
         }
         public void UpdateOsVersion(string platform = null)
@@ -194,17 +194,13 @@ namespace HP_Driver_Tool.ViewModels
             SoftwareManager.UpdateOsVersion(platform);
             Loading = false;
             SelectPlatformHandler?.Invoke();
-            if (platform == null)
-            {
-                GetDrivers();
-            }
         }
         public void GetDrivers(string version = null)
         {
             Loading = true;
             string finalVersion;
             SoftwareManager.GetDrivers(version, out finalVersion, () => Loading = false);
-            if (finalVersion != version && finalVersion != null)
+            if (finalVersion != version && finalVersion != null && version == null)
             {
                 SelectVersionHandler?.Invoke(finalVersion);
             }

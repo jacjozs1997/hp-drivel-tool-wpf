@@ -53,5 +53,12 @@ namespace HP_Driver_Tool
 
             base.OnStartup(e);
         }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            Process.Start("netsh", "wlan disconnect").WaitForExit();
+            Process.Start("netsh", "wlan connect ssid=hpdoa-test name=hpdoa-test").WaitForExit();
+            base.OnExit(e);
+        }
     }
 }
