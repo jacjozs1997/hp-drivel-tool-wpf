@@ -46,6 +46,8 @@ namespace HP_Driver_Tool.ViewModels
         public SelectPlatform SelectPlatformHandler;
         public SelectVersion SelectVersionHandler;
 
+        public string Token { get; set; } = nameof(MainWindowViewModel);
+
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -1,4 +1,6 @@
-﻿using HandyControl.Tools.Command;
+﻿using HandyControl.Controls;
+using HandyControl.Data;
+using HandyControl.Tools.Command;
 using HP_Driver_Tool.Models;
 using HP_Driver_Tool.ViewModels;
 using System;
@@ -6,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -21,7 +22,7 @@ namespace HP_Driver_Tool.Views
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window
     {
         protected MainWindowViewModel Context => (MainWindowViewModel)DataContext;
         public MainWindow()
@@ -43,6 +44,13 @@ namespace HP_Driver_Tool.Views
             {
                 var danger = FindResource("DangerBrush") as LinearGradientBrush;
                 sb_pnNumber.BorderBrush = danger;
+
+                Growl.Error(new GrowlInfo
+                {
+                    Message = "Invalid product number",
+                    ShowDateTime = false,
+                    Token = Context.Token
+                });
             }));
         }
         public void ValidSearch()
@@ -87,17 +95,17 @@ namespace HP_Driver_Tool.Views
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ComboBox comboBox = sender as ComboBox;
+            System.Windows.Controls.ComboBox comboBox = sender as System.Windows.Controls.ComboBox;
             Context.UpdateOsVersion(comboBox.SelectedValue as string);
         }
 
-        private void SearchBar_SearchStarted(object sender, HandyControl.Data.FunctionEventArgs<string> e)
+        private void SearchBar_SearchStarted(object sender, FunctionEventArgs<string> e)
         {
             Context.GetOsInfos(e.Info);
         }
         private void ComboBox_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
         {
-            ComboBox comboBox = sender as ComboBox;
+            System.Windows.Controls.ComboBox comboBox = sender as System.Windows.Controls.ComboBox;
             Context.GetDrivers(comboBox.SelectedValue as string);
         }
     }

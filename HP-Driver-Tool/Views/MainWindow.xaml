@@ -7,87 +7,93 @@
         xmlns:hc="https://handyorg.github.io/handycontrol"
         x:Class="HP_Driver_Tool.Views.MainWindow" mc:Ignorable="d"
         Title="{Binding Title}" Height="800" Width="1400">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="700*"/>
-            <ColumnDefinition Width="600*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="600*"/>
-        </Grid.RowDefinitions>
-        <StackPanel VerticalAlignment="Stretch" Grid.Row="0" Margin="0,15,0,15" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
-            <hc:CircleProgressBar x:Name="loadingSpin" Margin="0,0,15,0" Visibility="{Binding Path=Loading, Converter={StaticResource BoolToVis}}" ShowText="False" Width="20" Height="20" ArcThickness="2" IsIndeterminate="True"/>
-            <hc:SearchBar x:Name="sb_pnNumber" Width="380" hc:InfoElement.Necessary="True" BorderBrush="{Binding Path=IsValid, RelativeSource={RelativeSource TemplatedParent}}" hc:InfoElement.Placeholder="Please Enter Product Number" Style="{StaticResource SearchBarPlus}" SearchStarted="SearchBar_SearchStarted" />
-            <ComboBox ItemsSource="{Binding OsPlatforms}" x:Name="cb_osPlatforms" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the windows" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged"/>
-            <ComboBox ItemsSource="{Binding OsVersions}" x:Name="cb_osVersions" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the version" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged_1"/>
-            <StackPanel Orientation="Horizontal">
-                <Button Margin="6,0,0,0" hc:IconElement.Geometry="{StaticResource SaveGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=InstallAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
-                <Button Margin="6,0,15,0" hc:IconElement.Geometry="{StaticResource DownloadGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=DownloadAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
-            </StackPanel>
-        </StackPanel>
-        <hc:SimpleStackPanel Margin="15,0,0,15" Grid.Row="1" Grid.Column="0">
-            <hc:ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UIElement}}" IsInertiaEnabled="True">
-                <ItemsControl Margin="15,0,30,0" x:Name="softwearPanel" ItemsSource="{Binding Softwares}" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Expander Header="{Binding accordionName}" Style="{StaticResource customExpander}" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch">
-                                <ListView ItemsSource="{Binding softwareDriversList}" SelectionMode="Multiple" SelectionChanged="ListView_SelectionChanged" Cursor="Hand">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn Width="420" DisplayMemberBinding="{Binding latestVersionDriver.title}"/>
-                                            <GridViewColumn Width="80" DisplayMemberBinding="{Binding Path=latestVersionDriver.VersionUpdatedDate, StringFormat=yyyy-MM-dd}"/>
-                                            <GridViewColumn Width="130" DisplayMemberBinding="{Binding latestVersionDriver.version}"/>
-                                        </GridView>
-                                    </ListView.View>
-                                    <ListView.Resources>
-                                        <Style TargetType="GridViewColumnHeader">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </Style>
-                                    </ListView.Resources>
-                                    <ListView.ItemContainerStyle>
-                                        <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource ListViewItemBaseStyle}">
-                                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                                            <Style.Triggers>
-                                                <MultiTrigger>
-                                                    <MultiTrigger.Conditions>
-                                                        <Condition Property="IsSelected" Value="true"/>
-                                                        <Condition Property="Selector.IsSelectionActive" Value="false"/>
-                                                    </MultiTrigger.Conditions>
-                                                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                                                    <Setter Property="Foreground" Value="{DynamicResource TextIconBrush}"/>
-                                                </MultiTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ListView.ItemContainerStyle>
-                                </ListView>
-                            </Expander>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </hc:ScrollViewer>
-        </hc:SimpleStackPanel>
-        <hc:SimpleStackPanel Margin="0,0,0,15" Grid.Row="1" Grid.Column="1">
-            <hc:ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UIElement}}" IsInertiaEnabled="True">
-                <DataGrid Margin="0,0,30,0" HeadersVisibility="None" RowStyle="{StaticResource DataGridRowStyleProgress}" AutoGenerateColumns="False" ItemsSource="{Binding SelectedSoftwares}" Effect="{StaticResource EffectShadow2}" VerticalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" FontWeight="Bold">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Width="15*" Binding="{Binding title}" IsReadOnly="True"/>
-                        <DataGridTextColumn Width="3*" Binding="{Binding fileSize}" IsReadOnly="True"/>
-                        <DataGridTextColumn Width="5*" Binding="{Binding version}" IsReadOnly="True"/>
-                        <DataGridTemplateColumn Width="3*" CanUserResize="False">
-                            <DataGridTemplateColumn.CellTemplate>
+    <hc:TransitioningContentControl>
+        <hc:SimplePanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="700*"/>
+                    <ColumnDefinition Width="600*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="600*"/>
+                </Grid.RowDefinitions>
+                <StackPanel VerticalAlignment="Stretch" Grid.Row="0" Margin="0,15,0,15" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <hc:CircleProgressBar x:Name="loadingSpin" Margin="0,0,15,0" Visibility="{Binding Path=Loading, Converter={StaticResource BoolToVis}}" ShowText="False" Width="20" Height="20" ArcThickness="2" IsIndeterminate="True"/>
+                    <hc:SearchBar x:Name="sb_pnNumber" Width="380" hc:InfoElement.Necessary="True" BorderBrush="{Binding Path=IsValid, RelativeSource={RelativeSource TemplatedParent}}" hc:InfoElement.Placeholder="Please Enter Product Number" Style="{StaticResource SearchBarPlus}" SearchStarted="SearchBar_SearchStarted" />
+                    <ComboBox ItemsSource="{Binding OsPlatforms}" x:Name="cb_osPlatforms" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the windows" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged"/>
+                    <ComboBox ItemsSource="{Binding OsVersions}" x:Name="cb_osVersions" Margin="15,0,0,0" hc:InfoElement.Placeholder="Please enter the version" Style="{StaticResource ComboBoxExtend}" SelectionChanged="ComboBox_SelectionChanged_1"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Margin="6,0,0,0" hc:IconElement.Geometry="{StaticResource SaveGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=InstallAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+                        <Button Margin="6,0,15,0" hc:IconElement.Geometry="{StaticResource DownloadGeometry}" Style="{StaticResource ButtonPrimary}" Command="{Binding Path=DownloadAllCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+                    </StackPanel>
+                </StackPanel>
+                <hc:SimpleStackPanel Margin="15,0,0,15" Grid.Row="1" Grid.Column="0">
+                    <hc:ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UIElement}}" IsInertiaEnabled="True">
+                        <ItemsControl Margin="15,0,30,0" x:Name="softwearPanel" ItemsSource="{Binding Softwares}" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <ToggleButton Margin="6,0,0,0" CommandParameter="{Binding}"
-                                                          hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Style="{StaticResource ToggleButtonIconDanger}" Command="{Binding RemoveCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
-                                    </StackPanel>
+                                    <Expander Header="{Binding accordionName}" Style="{StaticResource customExpander}" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch">
+                                        <ListView ItemsSource="{Binding softwareDriversList}" SelectionMode="Multiple" SelectionChanged="ListView_SelectionChanged" Cursor="Hand">
+                                            <ListView.View>
+                                                <GridView>
+                                                    <GridViewColumn Width="420" DisplayMemberBinding="{Binding latestVersionDriver.title}"/>
+                                                    <GridViewColumn Width="80" DisplayMemberBinding="{Binding Path=latestVersionDriver.VersionUpdatedDate, StringFormat=yyyy-MM-dd}"/>
+                                                    <GridViewColumn Width="130" DisplayMemberBinding="{Binding latestVersionDriver.version}"/>
+                                                </GridView>
+                                            </ListView.View>
+                                            <ListView.Resources>
+                                                <Style TargetType="GridViewColumnHeader">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </Style>
+                                            </ListView.Resources>
+                                            <ListView.ItemContainerStyle>
+                                                <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource ListViewItemBaseStyle}">
+                                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                                    <Style.Triggers>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsSelected" Value="true"/>
+                                                                <Condition Property="Selector.IsSelectionActive" Value="false"/>
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextIconBrush}"/>
+                                                        </MultiTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ListView.ItemContainerStyle>
+                                        </ListView>
+                                    </Expander>
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </hc:ScrollViewer>
+                </hc:SimpleStackPanel>
+                <hc:SimpleStackPanel Margin="0,0,0,15" Grid.Row="1" Grid.Column="1">
+                    <hc:ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UIElement}}" IsInertiaEnabled="True">
+                        <DataGrid Margin="0,0,30,0" HeadersVisibility="None" RowStyle="{StaticResource DataGridRowStyleProgress}" AutoGenerateColumns="False" ItemsSource="{Binding SelectedSoftwares}" Effect="{StaticResource EffectShadow2}" VerticalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" FontWeight="Bold">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Width="15*" Binding="{Binding title}" IsReadOnly="True"/>
+                                <DataGridTextColumn Width="3*" Binding="{Binding fileSize}" IsReadOnly="True"/>
+                                <DataGridTextColumn Width="5*" Binding="{Binding version}" IsReadOnly="True"/>
+                                <DataGridTemplateColumn Width="3*" CanUserResize="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <ToggleButton Margin="6,0,0,0" CommandParameter="{Binding}"
+                                                              hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Style="{StaticResource ToggleButtonIconDanger}" Command="{Binding RemoveCmd}" Effect="{StaticResource EffectShadow1}" Cursor="Hand"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </hc:ScrollViewer>
+                </hc:SimpleStackPanel>
+            </Grid>
+            <hc:ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalAlignment="Right" IsInertiaEnabled="True" IsPenetrating="True">
+                <StackPanel hc:Growl.Token="{Binding Token}" VerticalAlignment="Top" Margin="0,10,10,10"/>
             </hc:ScrollViewer>
-        </hc:SimpleStackPanel>
-    </Grid>
-
+        </hc:SimplePanel>
+    </hc:TransitioningContentControl>
 </Window>

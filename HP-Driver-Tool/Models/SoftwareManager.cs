@@ -35,8 +35,6 @@ namespace HP_Driver_Tool.Models
 
         public static void GetOsInfos(string productNumber = null, Action afterAction = null, Action afterFailAction = null)
         {
-            bool startUpSearch = productNumber == null;
-
             if (productNumber == null && App.DeviceProductNumber != null)
             {
                 productNumber = App.DeviceProductNumber;
@@ -49,6 +47,7 @@ namespace HP_Driver_Tool.Models
             }
 
             m_softwares.Clear();
+
             Task.Run(() =>
             {
                 using (var client = new WebClient())
@@ -75,14 +74,13 @@ namespace HP_Driver_Tool.Models
 
                     m_osPlatforms.AddFromEnumerable(m_softwareOsVersions.data.osversions.Select(os => os.name));
                     afterAction?.Invoke();
-
-                    if (startUpSearch)
-                    {
-
-                    }
                 }
                 else
                 {
+                    m_osPlatforms.Clear();
+
+                    m_osVersions.Clear();
+
                     afterFailAction?.Invoke();
                 }
             });
