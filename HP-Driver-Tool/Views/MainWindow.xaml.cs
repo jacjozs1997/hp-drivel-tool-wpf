@@ -13,7 +13,7 @@ namespace HP_Driver_Tool.Views
     /// </summary>
     public partial class MainWindow : Window
     {
-        protected MainWindowViewModel Context => (MainWindowViewModel)DataContext;
+        public MainWindowViewModel Context => (MainWindowViewModel)DataContext;
         public MainWindow()
         {
             InitializeComponent();
@@ -24,8 +24,6 @@ namespace HP_Driver_Tool.Views
             Context.ValidSearchHandler += ValidSearch;
             Context.SelectPlatformHandler += SelectPlatform;
             Context.SelectVersionHandler += SelectVersion;
-
-            Context.GetOsInfos();
         }
         public void InvalidSearch(string message)
         {
