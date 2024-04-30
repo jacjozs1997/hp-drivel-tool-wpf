@@ -16,6 +16,7 @@ namespace HP_Driver_Tool.Models
 		public WifiConnaction()
 		{
 			m_wifi = new Wifi();
+			m_wifi.ConnectionStatusChanged += wifi_ConnectionStatusChanged;
 			if (m_wifi.NoWifiAvailable)
 				Console.WriteLine("\r\n-- NO WIFI CARD WAS FOUND --");
 		}
@@ -33,22 +34,20 @@ namespace HP_Driver_Tool.Models
 				Console.WriteLine("You are not connected to a wifi");
 		}
 
-		public IEnumerable<AccessPoint> List()
+		public IEnumerable<AccessPoint> List(bool logList = true)
 		{
-			bool loop;
-            do { 
-				loop = false;
-				try
-				{
-					return m_wifi.GetAccessPoints().OrderByDescending(ap => ap.SignalStrength);
-				}
-				catch (Win32Exception)
-				{
-					HandyControl.Controls.MessageBox.Show("A vezeték nélküli helyi hálózat adaptere ki van kapcsolva, és nem támogatja a kért műveletet", "Hálózati hiba", MessageBoxButton.OK);
-					loop = true;
-				}
-			} while (loop);
-			return Enumerable.Empty<AccessPoint>();
+			if (logList)
+				Console.WriteLine("\r\n-- Access point list --");
+			IEnumerable<AccessPoint> accessPoints = m_wifi.GetAccessPoints().OrderByDescending(ap => ap.SignalStrength);
+
+			if (logList)
+			{
+				int i = 0;
+				foreach (AccessPoint ap in accessPoints)
+					Console.WriteLine("{0}. {1} {2}% Connected: {3}", i++, ap.Name, ap.SignalStrength, ap.IsConnected);
+			}
+
+			return accessPoints;
 		}
 
 
@@ -65,14 +64,9 @@ namespace HP_Driver_Tool.Models
 
 				if (authRequest.IsPasswordRequired)
 				{
-					if (selectedAP.HasProfile)
-					// If there already is a stored profile for the network, we can either use it or overwrite it with a new password.
+					if (!selectedAP.HasProfile)
 					{
-						Console.Write("\r\nA network profile already exist, do you want to use it (y/n)? ");
-						if (Console.ReadLine().ToLower() == "y")
-						{
-							overwrite = false;
-						}
+						overwrite = true;
 					}
 
 					if (overwrite)

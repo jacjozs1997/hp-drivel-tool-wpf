@@ -21,8 +21,6 @@ namespace HP_Driver_Tool
     /// </summary>
     public partial class App : Application
     {
-        [DllImport("wininet.dll")]
-        public extern static bool InternetGetConnectedState(out int Description, int ReservedValue);
         #region Vaiables
         private static string m_devicePn = "3D6S5EA";
         private static string m_deviceOs = null;
@@ -35,6 +33,8 @@ namespace HP_Driver_Tool
         #endregion
         protected override void OnStartup(StartupEventArgs e)
         {
+            ConsoleManager.Show();
+
             using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(new SelectQuery(@"Select * from Win32_ComputerSystem")))
             {
                 foreach (ManagementObject process in searcher.Get())
@@ -43,7 +43,7 @@ namespace HP_Driver_Tool
                     m_devicePn = process["SystemSKUNumber"] as string;
                     if (m_devicePn == null)
                     {
-                       m_devicePn = process["SystemSKU"] as string;
+                        m_devicePn = process["SystemSKU"] as string;
                     }
                 }
             }
@@ -51,12 +51,41 @@ namespace HP_Driver_Tool
             m_deviceOs = OSVersion.GetOperatingSystem().GetName();
             m_deviceOsVersion = OSVersion.MajorVersion10Properties().DisplayVersion;
 
-            ExecuteCommand("disable-updates");
+            int wlanExit;
+            if (!ExecuteCommand("Wlan", "wlan", out wlanExit))
+            {
+                string message = "";
+                switch (wlanExit)
+                {
+                    case 1:
+                        message = "\"win-8-act.xml\" fájl nem található!";
+                        break;
+                    case 2:
+                        message = "\"hpdoa-test.xml\" fájl nem található!";
+                        break;
+                    default:
+                        break;
+                }
+                if (HandyControl.Controls.MessageBox.Show(message, "Fájl hiba", MessageBoxButton.OK) == MessageBoxResult.OK)
+                {
+                    return;
+                }
+            }
+
+            ExecuteCommand("WinUpdate", "disable-updates", out _);
 
             if (!IsConnectedToInternet())
             {
+                WifiConnaction.Instance.Disconnect();
                 NetworkChange.NetworkAddressChanged += new NetworkAddressChangedEventHandler(AddressChangedCallback);
                 WifiConnaction.Instance.Connect("Win8-activation");
+            }
+            else
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    ((MainWindowViewModel)MainWindow.DataContext).GetOsInfos();
+                }));
             }
             base.OnStartup(e);
         }
@@ -66,44 +95,47 @@ namespace HP_Driver_Tool
             WifiConnaction.Instance.Disconnect();
             WifiConnaction.Instance.Connect("hpdoa-test");
 
-            ExecuteCommand("reenable-updates");
+            ExecuteCommand("WinUpdate", "reenable-updates", out _);
+
+            ConsoleManager.Hide();
 
             base.OnExit(e);
         }
 
-        public void ExecuteCommand(string command)
+        public bool ExecuteCommand(string dir, string command, out int exitCode)
         {
+            exitCode = 0;
             try
             {
-                int ExitCode;
-                ProcessStartInfo ProcessInfo;
-                Process process;
-
-                ProcessInfo = new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WinUpdate", $"{command}.bat"));
-                ProcessInfo.CreateNoWindow = false;
-                ProcessInfo.UseShellExecute = false;
-                ProcessInfo.WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WinUpdate");
-                // *** Redirect the output ***
-                ProcessInfo.RedirectStandardError = true;
-                ProcessInfo.RedirectStandardOutput = true;
-
-                process = Process.Start(ProcessInfo);
+                Process process = new Process();
+                process.StartInfo.FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dir, $"{command}.bat");
+                process.StartInfo.WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dir);
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                //* Set your output and error (asynchronous) handlers
+                process.OutputDataReceived += (s, e) => Console.WriteLine(e.Data);
+                process.ErrorDataReceived += (s, e) => Console.WriteLine(e.Data);
+                //* Start process and handlers
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
                 process.WaitForExit();
-
-                // *** Read the streams ***
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-
-                ExitCode = process.ExitCode;
-                if (!String.IsNullOrEmpty(error))
+                exitCode = process.ExitCode;
+                switch (exitCode)
                 {
-                    MessageBox.Show("error>>" + (String.IsNullOrEmpty(error) ? "(none)" : error));
+                    case 1:
+                    case 2:
+                        return false;
                 }
+
                 process.Close();
+                return true;
             }
             catch (Exception e)
             {
-                MessageBox.Show("error>>" + e.Message);
+                Console.WriteLine("error >> " + e.Message);
+                return false;
             }
         }
 
@@ -111,7 +143,7 @@ namespace HP_Driver_Tool
         {
             try
             {
-                return InternetGetConnectedState(out _, 0);
+                return (new Ping().Send("google.com", 1000, new byte[32], new PingOptions()).Status == IPStatus.Success);
             }
             catch
             {

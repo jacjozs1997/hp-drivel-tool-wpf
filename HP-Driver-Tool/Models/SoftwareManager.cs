@@ -99,8 +99,6 @@ namespace HP_Driver_Tool.Models
         }
         public static void UpdateOsVersion(string platform)
         {
-            bool startUpSearch = platform == null;
-
             if (platform == null && App.DeviceOS != null)
             {
                 platform = App.DeviceOS;

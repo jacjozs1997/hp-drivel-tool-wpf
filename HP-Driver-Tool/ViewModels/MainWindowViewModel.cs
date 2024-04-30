@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace HP_Driver_Tool.ViewModels
 {
@@ -153,6 +154,11 @@ namespace HP_Driver_Tool.ViewModels
                 } 
                 else
                 {
+                    var files = Directory.GetFiles(path);
+                    if (files.Length == 1)
+                    {
+                        Process.Start(files[0]);
+                    }
                     //TODO
                 }
             }
@@ -181,6 +187,13 @@ namespace HP_Driver_Tool.ViewModels
                 Loading = false;
                 IsValid = true;
                 ValidSearchHandler?.Invoke();
+                if (productNumber == null)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        UpdateOsVersion();
+                    });
+                }
             }, (msg) =>
             {
                 Loading = false;
@@ -194,6 +207,10 @@ namespace HP_Driver_Tool.ViewModels
             SoftwareManager.UpdateOsVersion(platform);
             Loading = false;
             SelectPlatformHandler?.Invoke();
+            if (platform == null)
+            {
+                GetDrivers();
+            }
         }
         public void GetDrivers(string version = null)
         {
