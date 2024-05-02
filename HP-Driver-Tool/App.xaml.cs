@@ -33,6 +33,16 @@ namespace HP_Driver_Tool
         #endregion
         protected override void OnStartup(StartupEventArgs e)
         {
+            ManagementObjectSearcher objSearcher = new ManagementObjectSearcher("Select * from Win32_PnPSignedDriver");
+
+            ManagementObjectCollection objCollection = objSearcher.Get();
+
+            foreach (ManagementObject obj in objCollection)
+            {
+                string info = String.Format("Device='{0}',Manufacturer='{1}',DriverVersion='{2}' ", obj["DeviceName"], obj["Manufacturer"], obj["DriverVersion"]);
+                Console.WriteLine($"Device driver: {info}");
+            }
+
             ConsoleManager.Show();
 
             using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(new SelectQuery(@"Select * from Win32_ComputerSystem")))
@@ -68,16 +78,18 @@ namespace HP_Driver_Tool
                 }
                 if (HandyControl.Controls.MessageBox.Show(message, "Fájl hiba", MessageBoxButton.OK) == MessageBoxResult.OK)
                 {
+                    Current.Shutdown();
                     return;
                 }
             }
 
             ExecuteCommand("WinUpdate", "disable-updates", out _);
+            
+            NetworkChange.NetworkAddressChanged += new NetworkAddressChangedEventHandler(AddressChangedCallback);
 
             if (!IsConnectedToInternet())
             {
                 WifiConnaction.Instance.Disconnect();
-                NetworkChange.NetworkAddressChanged += new NetworkAddressChangedEventHandler(AddressChangedCallback);
                 WifiConnaction.Instance.Connect("Win8-activation");
             }
             else

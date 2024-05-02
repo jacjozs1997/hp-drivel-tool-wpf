@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Management;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -76,7 +77,15 @@ namespace HP_Driver_Tool.ViewModels
         { 
             get
             {
-                return $"HP Driver Tool | PN: {App.DeviceProductNumber} | OS: {App.DeviceOS} | Version: {App.DeviceOsVersion}";
+                string bios = "";
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(new SelectQuery(@"SELECT * FROM Win32_BIOS")))
+                {
+                    foreach (ManagementObject process in searcher.Get())
+                    {
+                        bios = ((string[])process["BIOSVersion"]).Length > 1 ? ((string[])process["BIOSVersion"])[0] + " - " + ((string[])process["BIOSVersion"])[1] : ((string[])process["BIOSVersion"])[0];
+                    }
+                }
+                return $"HP Driver Tool | PN: {App.DeviceProductNumber} | OS: {App.DeviceOS} | Version: {App.DeviceOsVersion} | Bios Ver: {bios}";
             } 
         }
 
@@ -87,80 +96,126 @@ namespace HP_Driver_Tool.ViewModels
         }
         private void Download(string args)
         {
-            string directory = GetDownloadFolderPath();
-            if (SoftwareManager.ProductNumber != null)
+            try
             {
-                directory = Path.Combine(directory, SoftwareManager.ProductNumber);
-            }
-            if (SoftwareManager.ProductNumber != null && !Directory.Exists(Path.Combine(directory, SoftwareManager.ProductNumber)))
-            {
-                Directory.CreateDirectory(directory);
-            }
-            foreach (var drive in m_selected)
-            {
-                drive.Percent = 0;
-                drive.ProgressBarStyle = Application.Current.TryFindResource(typeof(ProgressBar)) as Style;
-                drive.ProgressBarShow = true;
-                drive.filePath = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}.exe");
-
-                var client = new WebClient();
-                client.DownloadProgressChanged += (s, e) =>
+                string directory = GetDownloadFolderPath();
+                if (SoftwareManager.ProductNumber != null)
                 {
-                    drive.Percent = e.ProgressPercentage;
-                };
-                client.DownloadFileCompleted += (s, e) =>
+                    directory = Path.Combine(directory, SoftwareManager.ProductNumber);
+                }
+                if (SoftwareManager.ProductNumber != null && !Directory.Exists(Path.Combine(directory, SoftwareManager.ProductNumber)))
                 {
-                    if (e.Cancelled)
+                    Directory.CreateDirectory(directory);
+                }
+                foreach (var drive in m_selected)
+                {
+                    drive.Percent = 0;
+                    drive.ProgressBarStyle = Application.Current.TryFindResource(typeof(ProgressBar)) as Style;
+                    drive.ProgressBarShow = true;
+                    drive.filePath = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}.exe");
+                    Console.WriteLine($"Download: {drive.title} - {drive.version}");
+                    var client = new WebClient();
+                    client.DownloadProgressChanged += (s, e) =>
                     {
-                        client.Dispose();
-                        drive.DownloadClient = null;
-                        File.Delete(drive.filePath);
-                        drive.ProgressBarStyle = Application.Current.Resources["ProgressBarDanger"] as Style;
-                        return;
-                    }
-                    else
+                        drive.Percent = e.ProgressPercentage;
+                    };
+                    client.DownloadFileCompleted += (s, e) =>
                     {
-                        drive.ProgressBarStyle = Application.Current.Resources["ProgressBarSuccess"] as Style;
-                    }
-                };
-                drive.DownloadClient = client;
-                drive.DownloadClient.DownloadFileAsync(new Uri(drive.fileUrl), drive.filePath);
+                        if (e.Cancelled)
+                        {
+                            client.Dispose();
+                            drive.DownloadClient = null;
+                            File.Delete(drive.filePath);
+                            drive.ProgressBarStyle = Application.Current.Resources["ProgressBarDanger"] as Style;
+                            Console.WriteLine($"Download fail: {drive.title} - {drive.version}");
+                            return;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Downloaded: {drive.title} - {drive.version}");
+                            drive.ProgressBarStyle = Application.Current.Resources["ProgressBarSuccess"] as Style;
+                        }
+                    };
+                    drive.DownloadClient = client;
+                    drive.DownloadClient.DownloadFileAsync(new Uri(drive.fileUrl), drive.filePath);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
         }
         private void Install(string args)
         {
-            string directory = GetDownloadFolderPath();
-            if (SoftwareManager.ProductNumber != null)
+            try
             {
-                directory = Path.Combine(directory, SoftwareManager.ProductNumber);
-            }
-            if (SoftwareManager.ProductNumber != null && !Directory.Exists(Path.Combine(directory, SoftwareManager.ProductNumber)))
-            {
-                Directory.CreateDirectory(directory);
-            }
-            foreach (var drive in m_selected)
-            {
-                var path = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}");
-                if (!Directory.Exists(path))
+                string directory = GetDownloadFolderPath();
+                if (SoftwareManager.ProductNumber != null)
                 {
-                    Directory.CreateDirectory(path);
+                    directory = Path.Combine(directory, SoftwareManager.ProductNumber);
                 }
-                ExtractFile(drive.filePath, path);
-
-                path = Path.Combine(path, "install.cmd");
-                if (File.Exists(path))
+                if (SoftwareManager.ProductNumber != null && !Directory.Exists(Path.Combine(directory, SoftwareManager.ProductNumber)))
                 {
-                    Process.Start(path);
-                } 
-                else
+                    Directory.CreateDirectory(directory);
+                }
+                foreach (var drive in m_selected)
                 {
-                    var files = Directory.GetFiles(path);
-                    if (files.Length == 1)
+                    var path = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}");
+                    if (!Directory.Exists(path))
                     {
-                        Process.Start(files[0]);
+                        Directory.CreateDirectory(path);
                     }
-                    //TODO
+                    ExtractFile(drive.filePath, path);
+
+                    string installPath = Path.Combine(path, "install.cmd");
+                    if (File.Exists(installPath))
+                    {
+                        Console.WriteLine($"Start: {installPath}");
+                        Process process = new Process();
+                        process.StartInfo.FileName = installPath;
+                        process.StartInfo.UseShellExecute = false;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.StartInfo.RedirectStandardError = true;
+                        //* Set your output and error (asynchronous) handlers
+                        process.OutputDataReceived += (s, e) => Console.WriteLine(e.Data);
+                        process.ErrorDataReceived += (s, e) => Console.WriteLine(e.Data);
+                        //* Start process and handlers
+                        process.Start();
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+                        process.WaitForExit();
+
+                        process.Close();
+                    }
+                    else
+                    {
+                        var files = Directory.GetFiles(path);
+                        if (files.Length == 1)
+                        {
+                            Console.WriteLine($"Start: {files[0]}");
+                            Process process = new Process();
+                            process.StartInfo.FileName = files[0];
+                            process.StartInfo.UseShellExecute = false;
+                            process.StartInfo.RedirectStandardOutput = true;
+                            process.StartInfo.RedirectStandardError = true;
+                            //* Set your output and error (asynchronous) handlers
+                            process.OutputDataReceived += (s, e) => Console.WriteLine(e.Data);
+                            process.ErrorDataReceived += (s, e) => Console.WriteLine(e.Data);
+                            //* Start process and handlers
+                            process.Start();
+                            process.BeginOutputReadLine();
+                            process.BeginErrorReadLine();
+                            process.WaitForExit();
+
+                            process.Close();
+                        }
+                        //TODO
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
         }
         public void ExtractFile(string sourceArchive, string destination)
@@ -168,58 +223,92 @@ namespace HP_Driver_Tool.ViewModels
             string zPath = @".\7zip\7za.exe"; //add to proj and set CopyToOuputDir
             try
             {
-                ProcessStartInfo pro = new ProcessStartInfo();
-                //pro.WindowStyle = ProcessWindowStyle.Hidden;
-                pro.FileName = zPath;
-                pro.Arguments = string.Format("x \"{0}\" -y -o\"{1}\"", sourceArchive, destination);
-                Process.Start(pro).WaitForExit();
+                Console.WriteLine($"Extract: {sourceArchive}");
+
+                Process process = new Process();
+                process.StartInfo.FileName = zPath;
+                process.StartInfo.Arguments = string.Format("x \"{0}\" -y -o\"{1}\"", sourceArchive, destination);
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                //* Set your output and error (asynchronous) handlers
+                process.OutputDataReceived += (s, e) => Console.WriteLine(e.Data);
+                process.ErrorDataReceived += (s, e) => Console.WriteLine(e.Data);
+                //* Start process and handlers
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit();
+
+                process.Close();
             }
-            catch (System.Exception Ex)
+            catch (Exception e)
             {
-                //handle error
+                Console.WriteLine(e.Message);
             }
         }
         public void GetOsInfos(string productNumber = null)
         {
-            Loading = true;
-            SoftwareManager.GetOsInfos(productNumber, () =>
+            try
             {
-                Loading = false;
-                IsValid = true;
-                ValidSearchHandler?.Invoke();
-                if (productNumber == null)
+                Loading = true;
+                SoftwareManager.GetOsInfos(productNumber, () =>
                 {
-                    App.Current.Dispatcher.Invoke(() =>
+                    Loading = false;
+                    IsValid = true;
+                    ValidSearchHandler?.Invoke();
+                    if (productNumber == null)
                     {
-                        UpdateOsVersion();
-                    });
-                }
-            }, (msg) =>
+                        App.Current.Dispatcher.Invoke(() =>
+                        {
+                            UpdateOsVersion();
+                        });
+                    }
+                }, (msg) =>
+                {
+                    Loading = false;
+                    IsValid = false;
+                    InvalidSearchHandler?.Invoke(msg);
+                });
+            }
+            catch (Exception e)
             {
-                Loading = false;
-                IsValid = false;
-                InvalidSearchHandler?.Invoke(msg);
-            });
+                Console.WriteLine(e.Message);
+            }
         }
         public void UpdateOsVersion(string platform = null)
         {
-            Loading = true;
-            SoftwareManager.UpdateOsVersion(platform);
-            Loading = false;
-            SelectPlatformHandler?.Invoke();
-            if (platform == null)
+            try
             {
-                GetDrivers();
+                Loading = true;
+                SoftwareManager.UpdateOsVersion(platform);
+                Loading = false;
+                SelectPlatformHandler?.Invoke();
+                if (platform == null)
+                {
+                    GetDrivers();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
         }
         public void GetDrivers(string version = null)
         {
-            Loading = true;
-            string finalVersion;
-            SoftwareManager.GetDrivers(version, out finalVersion, () => Loading = false);
-            if (finalVersion != version && finalVersion != null && version == null)
+            try
             {
-                SelectVersionHandler?.Invoke(finalVersion);
+                Loading = true;
+                string finalVersion;
+                SoftwareManager.GetDrivers(version, out finalVersion, () => Loading = false);
+                if (finalVersion != version && finalVersion != null && version == null)
+                {
+                    SelectVersionHandler?.Invoke(finalVersion);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
         }
         string GetDownloadFolderPath()

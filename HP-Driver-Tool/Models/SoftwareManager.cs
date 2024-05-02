@@ -70,7 +70,6 @@ namespace HP_Driver_Tool.Models
                     if (m_productNumberInfos.totalCount > 0)
                     {
                         response = client.DownloadData($"https://support.hp.com/wcc-services/swd-v2/osVersionData?cc=hu&lc=hu&productOid={m_productNumberInfos.matches[0].pmNameOid}");
-                        Console.WriteLine(Encoding.UTF8.GetString(response));
                         m_softwareOsVersions = JsonConvert.DeserializeObject<SoftwareOsVersions>(Encoding.UTF8.GetString(response));
                         return true;
                     }

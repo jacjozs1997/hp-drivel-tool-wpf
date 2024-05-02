@@ -34,7 +34,7 @@ namespace HP_Driver_Tool.Models
 				Console.WriteLine("You are not connected to a wifi");
 		}
 
-		public IEnumerable<AccessPoint> List(bool logList = true)
+		public IEnumerable<AccessPoint> List(bool logList = false)
 		{
 			if (logList)
 				Console.WriteLine("\r\n-- Access point list --");
