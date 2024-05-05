@@ -160,6 +160,7 @@ namespace HP_Driver_Tool.ViewModels
                 }
                 foreach (var drive in m_selected)
                 {
+                    if (drive.DownloadClient?.IsBusy ?? false) continue;
                     var path = Path.Combine(directory, $"{ToUrlSlug(drive.title)}--{drive.version.Replace('.', '-')}");
                     if (!Directory.Exists(path))
                     {
@@ -173,6 +174,7 @@ namespace HP_Driver_Tool.ViewModels
                         Console.WriteLine($"Start: {installPath}");
                         Process process = new Process();
                         process.StartInfo.FileName = installPath;
+                        process.StartInfo.WorkingDirectory = path;
                         process.StartInfo.UseShellExecute = false;
                         process.StartInfo.RedirectStandardOutput = true;
                         process.StartInfo.RedirectStandardError = true;
@@ -195,6 +197,7 @@ namespace HP_Driver_Tool.ViewModels
                             Console.WriteLine($"Start: {files[0]}");
                             Process process = new Process();
                             process.StartInfo.FileName = files[0];
+                            process.StartInfo.WorkingDirectory = path;
                             process.StartInfo.UseShellExecute = false;
                             process.StartInfo.RedirectStandardOutput = true;
                             process.StartInfo.RedirectStandardError = true;

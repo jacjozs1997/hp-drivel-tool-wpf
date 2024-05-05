@@ -84,7 +84,7 @@ namespace HP_Driver_Tool
             }
 
             ExecuteCommand("WinUpdate", "disable-updates", out _);
-            
+
             NetworkChange.NetworkAddressChanged += new NetworkAddressChangedEventHandler(AddressChangedCallback);
 
             if (!IsConnectedToInternet())
